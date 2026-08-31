@@ -2,7 +2,7 @@ Day Planning Web App Requirements
 
 ## Personas
 
-### Persona 1 – Alex
+### Persona 1 – Tate
 Tate is a college student who needs to balance classes, homework, work, and personal activities.
 
 Goals:
