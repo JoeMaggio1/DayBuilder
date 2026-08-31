@@ -100,3 +100,5 @@ The Minimum Viable Product (MVP) will allow users to create and manage a basic d
 - Mobile app
 - Sharing schedules with other users
 - Recurring tasks
+
+Documentation reviewed for DAYB-4.
