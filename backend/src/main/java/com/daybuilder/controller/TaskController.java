@@ -2,7 +2,11 @@ package com.daybuilder.controller;
 
 import java.util.List;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -22,5 +26,11 @@ public class TaskController {
     @GetMapping
     public List<Task> getAllTasks() {
         return taskService.getAllTasks();
+    }
+
+    @PostMapping
+    public ResponseEntity<Task> createTask(@RequestBody Task task) {
+        Task createdTask = taskService.createTask(task);
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdTask);
     }
 }
