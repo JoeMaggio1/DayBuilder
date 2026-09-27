@@ -1,0 +1,5 @@
+/Users/jmaggio/DayBuilder-2/backend/src/main/java/com/daybuilder/backend/BackendApplication.java
+/Users/jmaggio/DayBuilder-2/backend/src/main/java/com/daybuilder/config/CorsConfig.java
+/Users/jmaggio/DayBuilder-2/backend/src/main/java/com/daybuilder/controller/TaskController.java
+/Users/jmaggio/DayBuilder-2/backend/src/main/java/com/daybuilder/model/Task.java
+/Users/jmaggio/DayBuilder-2/backend/src/main/java/com/daybuilder/service/TaskService.java

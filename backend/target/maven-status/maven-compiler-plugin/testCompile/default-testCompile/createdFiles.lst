@@ -1,0 +1,4 @@
+com/daybuilder/backend/BackendApplicationTests.class
+com/daybuilder/config/CorsConfigTest.class
+org/springframework/web/servlet/config/annotation/CorsRegistryTestUtils.class
+com/daybuilder/service/TaskServiceTest.class

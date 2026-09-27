@@ -1,0 +1,5 @@
+com/daybuilder/controller/TaskController.class
+com/daybuilder/backend/BackendApplication.class
+com/daybuilder/config/CorsConfig.class
+com/daybuilder/model/Task.class
+com/daybuilder/service/TaskService.class
