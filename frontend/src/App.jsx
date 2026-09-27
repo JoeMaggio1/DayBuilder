@@ -1,30 +1,27 @@
+import { useEffect, useState } from 'react'
 import TaskList from './TaskList'
+import { getTasks } from './services/taskService'
 
 function App() {
-  const tasks = [
-    {
-      id: 1,
-      title: 'Finish homework',
-      description: 'Complete the assigned homework',
-    },
-    {
-      id: 2,
-      title: 'Go to class',
-      description: 'Attend afternoon class',
-    },
-    {
-      id: 3,
-      title: 'Study',
-      description: 'Review notes for the quiz',
-    },
-  ]
+  const [tasks, setTasks] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    getTasks()
+      .then((data) => setTasks(data))
+      .catch(() => setError('Could not load tasks. Is the backend running?'))
+      .finally(() => setLoading(false))
+  }, [])
 
   return (
     <main>
       <h1>DayBuilder</h1>
       <p>Plan your day and manage your tasks.</p>
 
-      <TaskList tasks={tasks} />
+      {loading && <p>Loading tasks...</p>}
+      {error && <p role="alert">{error}</p>}
+      {!loading && !error && <TaskList tasks={tasks} />}
     </main>
   )
 }
