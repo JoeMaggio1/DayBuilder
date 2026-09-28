@@ -43,3 +43,18 @@ test("submits a new task", async () => {
     expect(handleTaskAdded).toHaveBeenCalledWith(newTask);
   });
 });
+test("allows the user to select a category", () => {
+  const handleTaskAdded = vi.fn();
+
+  render(<TaskForm onTaskAdded={handleTaskAdded} />);
+
+  const categoryDropdown = screen.getByLabelText("Category");
+
+  expect(categoryDropdown).toHaveValue("School");
+
+  fireEvent.change(categoryDropdown, {
+    target: { value: "Personal" },
+  });
+
+  expect(categoryDropdown).toHaveValue("Personal");
+});

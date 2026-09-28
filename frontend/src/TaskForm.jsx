@@ -3,6 +3,7 @@ import { useState } from "react";
 function TaskForm({ onTaskAdded }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("School");
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -15,6 +16,7 @@ function TaskForm({ onTaskAdded }) {
       body: JSON.stringify({
         title,
         description,
+        category,
         completed: false,
       }),
     });
@@ -24,6 +26,7 @@ function TaskForm({ onTaskAdded }) {
       onTaskAdded(newTask);
       setTitle("");
       setDescription("");
+      setCategory("School");
     }
   };
 
@@ -47,6 +50,19 @@ function TaskForm({ onTaskAdded }) {
           value={description}
           onChange={(event) => setDescription(event.target.value)}
         />
+      </label>
+
+      <label>
+        Category
+        <select
+          value={category}
+          onChange={(event) => setCategory(event.target.value)}
+        >
+          <option value="School">School</option>
+          <option value="Work">Work</option>
+          <option value="Personal">Personal</option>
+          <option value="Other">Other</option>
+        </select>
       </label>
 
       <button type="submit">Add Task</button>
