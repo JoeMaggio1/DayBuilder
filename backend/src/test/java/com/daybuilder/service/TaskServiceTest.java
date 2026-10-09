@@ -1,6 +1,7 @@
 package com.daybuilder.service;
 
 import com.daybuilder.model.Task;
+import com.daybuilder.repository.TaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -24,8 +25,7 @@ class TaskServiceTest {
     @BeforeEach
     void setUp() {
         // Fresh service for every test (starts with 3 seeded sample tasks)
-        taskService = new TaskService();
-    }
+        taskService = new TaskService(new TaskRepository());    }
 
     // ---------- getAllTasks ----------
 
