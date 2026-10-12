@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import TaskList from "./TaskList";
 import TaskForm from "./TaskForm";
-import { getTasks } from "./services/taskService";
-
-const API_URL = "http://localhost:8080/tasks";
+import { getTasks, updateTask, deleteTask } from "./services/taskService";
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -27,20 +25,7 @@ function App() {
     try {
       setError(null);
 
-      const response = await fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedTask),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to update task");
-      }
-
-      const savedTask = await response.json();
-
+      const savedTask = await updateTask(id, updatedTask);
       setTasks((currentTasks) =>
         currentTasks.map((task) =>
           task.id === id ? savedTask : task
@@ -55,13 +40,7 @@ function App() {
     try {
       setError(null);
 
-      const response = await fetch(`${API_URL}/${id}`, {
-        method: "DELETE",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to delete task");
-      }
+      await deleteTask(id);
 
       setTasks((currentTasks) =>
         currentTasks.filter((task) => task.id !== id)
