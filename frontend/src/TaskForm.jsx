@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { createTask } from "./services/taskService";
 function TaskForm({ onTaskAdded }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -8,26 +8,16 @@ function TaskForm({ onTaskAdded }) {
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const response = await fetch("http://localhost:8080/tasks", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title,
-        description,
-        category,
-        completed: false,
-      }),
+    const newTask = await createTask({
+      title,
+      description,
+      category,
+      completed: false,
     });
-
-    if (response.ok) {
-      const newTask = await response.json();
-      onTaskAdded(newTask);
-      setTitle("");
-      setDescription("");
-      setCategory("School");
-    }
+    onTaskAdded(newTask);
+    setTitle("");
+    setDescription("");
+    setCategory("School");
   };
 
   return (
