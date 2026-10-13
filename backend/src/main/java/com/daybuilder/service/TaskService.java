@@ -43,18 +43,15 @@ public class TaskService {
     }
 
     public Optional<Task> updateTask(Long id, Task updatedTask) {
-        if (taskRepository.findById(id).isEmpty()) {
-            return Optional.empty();
-        }
-
-        Task saved = new Task(
-                id,
-                updatedTask.getTitle(),
-                updatedTask.getDescription(),
-                updatedTask.isCompleted()
-        );
-
-        return Optional.of(taskRepository.save(saved));
+        return taskRepository.findById(id)
+                .map(existingTask -> taskRepository.save(
+                        new Task(
+                                id,
+                                updatedTask.getTitle(),
+                                updatedTask.getDescription(),
+                                updatedTask.isCompleted()
+                        )
+                ));
     }
 
     public boolean deleteTask(Long id) {

@@ -170,4 +170,47 @@ class TaskServiceTest {
         assertFalse(deleted);
         assertEquals(3, taskService.getAllTasks().size());
     }
+
+    @Test
+void updateTask_savesChangesThroughRepository() {
+    // Arrange
+    TaskRepository repository = new TaskRepository();
+    TaskService service = new TaskService(repository);
+
+    Task changes = new Task(null, "Updated homework", "New description", true);
+
+    // Act
+    Optional<Task> updated = service.updateTask(1L, changes);
+
+    // Assert
+    assertTrue(updated.isPresent());
+
+    Task saved = repository.findById(1L).orElseThrow();
+    assertEquals("Updated homework", saved.getTitle());
+    assertEquals("New description", saved.getDescription());
+    assertTrue(saved.isCompleted());
+}
+
+
+
+@Test
+void deleteTask_removesTaskFromRepository() {
+    // Arrange
+    TaskRepository repository = new TaskRepository();
+    TaskService service = new TaskService(repository);
+
+    // Make sure task 1 exists
+    assertTrue(repository.findById(1L).isPresent());
+
+    // Act
+    boolean deleted = service.deleteTask(1L);
+
+    // Assert
+    assertTrue(deleted);
+    assertTrue(repository.findById(1L).isEmpty());
+}
+
+
+
+
 }
