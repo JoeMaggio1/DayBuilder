@@ -1,64 +1,63 @@
 package com.daybuilder.service;
 
-import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.springframework.stereotype.Service;
 
 import com.daybuilder.model.Task;
+import com.daybuilder.repository.TaskRepository;
 
-/**
- * In-memory CRUD service for Task objects.
- *
- * Backed by a ConcurrentHashMap so it is safe to call from multiple request
- * threads. IDs are assigned by the service (never trusted from the caller)
- * so callers can pass a Task with a null id when creating.
- */
 @Service
 public class TaskService {
 
-    private final Map<Long, Task> tasks = new ConcurrentHashMap<>();
-    private final AtomicLong nextId = new AtomicLong();
+    private final TaskRepository taskRepository;
 
-    public TaskService() {
-        // Preserve the sample data introduced in DAYB-33 so existing
-        // behavior (GET /tasks) doesn't change for callers.
+    public TaskService(TaskRepository taskRepository) {
+        this.taskRepository = taskRepository;
+
+        // Keep the original sample tasks
         createTask(new Task(null, "Finish homework", "Complete the assigned homework", false));
         createTask(new Task(null, "Go to class", "Attend afternoon class", false));
         createTask(new Task(null, "Study", "Review notes for the quiz", false));
     }
 
     public List<Task> getAllTasks() {
-        return tasks.values().stream()
-                .sorted(Comparator.comparing(Task::getId))
-                .collect(java.util.stream.Collectors.toList());
+        return taskRepository.findAll();
     }
 
     public Optional<Task> getTaskById(Long id) {
-        return Optional.ofNullable(tasks.get(id));
+        return taskRepository.findById(id);
     }
 
     public Task createTask(Task task) {
-        long id = nextId.incrementAndGet();
-        Task saved = new Task(id, task.getTitle(), task.getDescription(), task.isCompleted());
-        tasks.put(id, saved);
-        return saved;
+        // Ignore IDs supplied by callers
+        Task newTask = new Task(
+                null,
+                task.getTitle(),
+                task.getDescription(),
+                task.isCompleted()
+        );
+
+        return taskRepository.save(newTask);
     }
 
     public Optional<Task> updateTask(Long id, Task updatedTask) {
-        if (!tasks.containsKey(id)) {
+        if (taskRepository.findById(id).isEmpty()) {
             return Optional.empty();
         }
-        Task saved = new Task(id, updatedTask.getTitle(), updatedTask.getDescription(), updatedTask.isCompleted());
-        tasks.put(id, saved);
-        return Optional.of(saved);
+
+        Task saved = new Task(
+                id,
+                updatedTask.getTitle(),
+                updatedTask.getDescription(),
+                updatedTask.isCompleted()
+        );
+
+        return Optional.of(taskRepository.save(saved));
     }
 
     public boolean deleteTask(Long id) {
-        return tasks.remove(id) != null;
+        return taskRepository.deleteById(id);
     }
 }
