@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import TaskList from "./TaskList";
 import TaskForm from "./TaskForm";
-import { getTasks } from "./services/taskService";
-
+import { getTasks, deleteTask } from "./services/taskService";
 const API_URL = "http://localhost:8080/tasks";
 
 function App() {
@@ -13,9 +12,7 @@ function App() {
   useEffect(() => {
     getTasks()
       .then((data) => setTasks(data))
-      .catch(() =>
-        setError("Could not load tasks. Is the backend running?")
-      )
+      .catch(() => setError("Could not load tasks. Is the backend running?"))
       .finally(() => setLoading(false));
   }, []);
 
@@ -42,9 +39,7 @@ function App() {
       const savedTask = await response.json();
 
       setTasks((currentTasks) =>
-        currentTasks.map((task) =>
-          task.id === id ? savedTask : task
-        )
+        currentTasks.map((task) => (task.id === id ? savedTask : task))
       );
     } catch (err) {
       setError(err.message);
@@ -55,17 +50,9 @@ function App() {
     try {
       setError(null);
 
-      const response = await fetch(`${API_URL}/${id}`, {
-        method: "DELETE",
-      });
+      await deleteTask(id);
 
-      if (!response.ok) {
-        throw new Error("Failed to delete task");
-      }
-
-      setTasks((currentTasks) =>
-        currentTasks.filter((task) => task.id !== id)
-      );
+      setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
     } catch (err) {
       setError(err.message);
     }
@@ -83,11 +70,7 @@ function App() {
       {error && <p role="alert">{error}</p>}
 
       {!loading && (
-        <TaskList
-          tasks={tasks}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-        />
+        <TaskList tasks={tasks} onEdit={handleEdit} onDelete={handleDelete} />
       )}
     </>
   );
