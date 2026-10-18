@@ -1,32 +1,31 @@
 import { useState } from "react";
+import { createTask } from "./services/taskService";
 
 function TaskForm({ onTaskAdded }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState("School");
+  const [error, setError] = useState(null);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    const response = await fetch("http://localhost:8080/tasks", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    setError(null);
+
+    try {
+      const newTask = await createTask({
         title,
         description,
         category,
         completed: false,
-      }),
-    });
+      });
 
-    if (response.ok) {
-      const newTask = await response.json();
       onTaskAdded(newTask);
       setTitle("");
       setDescription("");
       setCategory("School");
+    } catch {
+      setError("Could not add task. Please try again.");
     }
   };
 
@@ -66,6 +65,8 @@ function TaskForm({ onTaskAdded }) {
       </label>
 
       <button type="submit">Add Task</button>
+
+      {error && <p role="alert">{error}</p>}
     </form>
   );
 }
