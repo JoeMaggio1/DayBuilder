@@ -87,4 +87,83 @@ describe("taskService", () => {
     // Act + Assert
     await expect(deleteTask(999)).rejects.toThrow(/404/);
   });
+
+  // ---------- DAYB-72: error handling ----------
+
+  describe("error handling", () => {
+    it("getTasks throws with the status when the server fails", async () => {
+      // Arrange
+      mockFetch(false, null, 500);
+
+      // Act + Assert
+      await expect(getTasks()).rejects.toThrow(
+        "GET /tasks failed with status 500"
+      );
+    });
+
+    it("createTask throws with the status and does not read the body", async () => {
+      // Arrange
+      const json = vi.fn();
+      globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 400, json });
+
+      // Act + Assert
+      await expect(createTask({ title: "" })).rejects.toThrow(
+        "POST /tasks failed with status 400"
+      );
+      expect(json).not.toHaveBeenCalled();
+    });
+
+    it("updateTask throws with the id and status for a missing task", async () => {
+      // Arrange
+      mockFetch(false, null, 404);
+
+      // Act + Assert
+      await expect(updateTask(42, { title: "Ghost" })).rejects.toThrow(
+        "PUT /tasks/42 failed with status 404"
+      );
+    });
+
+    it("deleteTask throws with the id and status for a missing task", async () => {
+      // Arrange
+      mockFetch(false, null, 404);
+
+      // Act + Assert
+      await expect(deleteTask(999)).rejects.toThrow(
+        "DELETE /tasks/999 failed with status 404"
+      );
+    });
+
+    it("deleteTask resolves to undefined on success", async () => {
+      // Arrange
+      mockFetch(true, null, 204);
+
+      // Act + Assert
+      await expect(deleteTask(4)).resolves.toBeUndefined();
+    });
+
+    it.each([
+      ["getTasks", () => getTasks()],
+      ["createTask", () => createTask({ title: "Gym" })],
+      ["updateTask", () => updateTask(1, { title: "Gym" })],
+      ["deleteTask", () => deleteTask(1)],
+    ])("%s passes through network errors", async (_name, call) => {
+      // Arrange: fetch itself rejects (e.g. backend not running)
+      globalThis.fetch = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+
+      // Act + Assert
+      await expect(call()).rejects.toThrow("Failed to fetch");
+    });
+
+    it("getTasks throws when the response body is not valid JSON", async () => {
+      // Arrange
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json: () => Promise.reject(new SyntaxError("Unexpected token <")),
+      });
+
+      // Act + Assert
+      await expect(getTasks()).rejects.toThrow(SyntaxError);
+    });
+  });
 });
