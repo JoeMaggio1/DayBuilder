@@ -23,7 +23,7 @@ class TaskServiceTest {
     @BeforeEach
     void setUp() {
         // Each test gets a fresh repository and service
-        taskRepository = new TaskRepository();
+        taskRepository = new InMemoryTaskRepository()
         taskService = new TaskService(taskRepository);
     }
 
@@ -296,7 +296,7 @@ class TaskServiceTest {
     @Test
     void separateServices_useIndependentRepositories() {
         // Arrange
-        TaskRepository secondRepository = new TaskRepository();
+        TaskRepository secondRepository = new InMemoryTaskRepository()
         TaskService secondService = new TaskService(secondRepository);
 
         // Act
