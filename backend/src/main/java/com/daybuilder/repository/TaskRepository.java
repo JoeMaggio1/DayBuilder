@@ -43,7 +43,36 @@ public class TaskRepository {
         return saved;
     }
 
+    /**
+     * Replaces an existing task's fields. The stored task keeps the given id;
+     * any id carried on {@code task} is ignored.
+     *
+     * @return the updated task, or empty if no task exists with that id
+     *         (nothing is created in that case)
+     */
+    public Optional<Task> update(Long id, Task task) {
+        if (id == null || task == null) {
+            return Optional.empty();
+        }
+
+        // computeIfPresent is atomic: a task deleted concurrently is never resurrected
+        return Optional.ofNullable(tasks.computeIfPresent(id, (key, existing) -> new Task(
+                key,
+                task.getTitle(),
+                task.getDescription(),
+                task.isCompleted()
+        )));
+    }
+
+    /**
+     * Removes the task with the given id.
+     *
+     * @return true if a task was removed, false if no task exists with that id
+     */
     public boolean deleteById(Long id) {
+        if (id == null) {
+            return false;
+        }
         return tasks.remove(id) != null;
     }
 }
