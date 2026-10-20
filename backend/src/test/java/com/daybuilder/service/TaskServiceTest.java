@@ -6,6 +6,8 @@ import com.daybuilder.repository.TaskRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import com.daybuilder.repository.InMemoryTaskRepository;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -23,7 +25,7 @@ class TaskServiceTest {
     @BeforeEach
     void setUp() {
         // Each test gets a fresh repository and service
-        taskRepository = new InMemoryTaskRepository()
+        taskRepository = new InMemoryTaskRepository();
         taskService = new TaskService(taskRepository);
     }
 
@@ -296,7 +298,7 @@ class TaskServiceTest {
     @Test
     void separateServices_useIndependentRepositories() {
         // Arrange
-        TaskRepository secondRepository = new InMemoryTaskRepository()
+        TaskRepository secondRepository = new InMemoryTaskRepository();
         TaskService secondService = new TaskService(secondRepository);
 
         // Act
