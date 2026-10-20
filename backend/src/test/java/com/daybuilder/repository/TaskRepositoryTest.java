@@ -16,7 +16,7 @@ class TaskRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        repository = new TaskRepository();
+        repository = new InMemoryTaskRepository();
     }
 
     @Test
