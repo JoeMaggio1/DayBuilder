@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import TaskList from "./TaskList";
 import TaskForm from "./TaskForm";
-import { getTasks, deleteTask } from "./services/taskService";
-const API_URL = "http://localhost:8080/tasks";
+import { getTasks, deleteTask, updateTask } from "./services/taskService";
+
 
 function App() {
   const [tasks, setTasks] = useState([]);
@@ -20,31 +20,23 @@ function App() {
     setTasks((currentTasks) => [...currentTasks, newTask]);
   };
 
-  async function handleEdit(id, updatedTask) {
-    try {
-      setError(null);
+  
+async function handleEdit(id, updatedTask) {
+  try {
+    setError(null);
 
-      const response = await fetch(`${API_URL}/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(updatedTask),
-      });
+    const savedTask = await updateTask(id, updatedTask);
 
-      if (!response.ok) {
-        throw new Error("Failed to update task");
-      }
-
-      const savedTask = await response.json();
-
-      setTasks((currentTasks) =>
-        currentTasks.map((task) => (task.id === id ? savedTask : task))
-      );
-    } catch (err) {
-      setError(err.message);
-    }
+    setTasks((currentTasks) =>
+      currentTasks.map((task) =>
+        task.id === id ? savedTask : task
+      )
+    );
+  } catch (err) {
+    setError(err.message);
   }
+}
+
 
   async function handleDelete(id) {
     try {
