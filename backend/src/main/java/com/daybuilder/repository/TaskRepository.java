@@ -32,12 +32,12 @@ public class TaskRepository {
                 ? nextId.incrementAndGet()
                 : task.getId();
 
-        Task saved = new Task(
-                id,
-                task.getTitle(),
-                task.getDescription(),
-                task.isCompleted()
-        );
+        Task saved = new Task.Builder()
+                .id(id)
+                .title(task.getTitle())
+                .description(task.getDescription())
+                .completed(task.isCompleted())
+                .build();
 
         tasks.put(id, saved);
         return saved;

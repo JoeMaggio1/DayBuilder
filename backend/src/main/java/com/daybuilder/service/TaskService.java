@@ -17,9 +17,9 @@ public class TaskService {
         this.taskRepository = taskRepository;
 
         // Keep the original sample tasks
-        createTask(new Task(null, "Finish homework", "Complete the assigned homework", false));
-        createTask(new Task(null, "Go to class", "Attend afternoon class", false));
-        createTask(new Task(null, "Study", "Review notes for the quiz", false));
+        createTask(new Task.Builder().title("Finish homework").description("Complete the assigned homework").build());
+        createTask(new Task.Builder().title("Go to class").description("Attend afternoon class").build());
+        createTask(new Task.Builder().title("Study").description("Review notes for the quiz").build());
     }
 
     public List<Task> getAllTasks() {
@@ -32,12 +32,11 @@ public class TaskService {
 
     public Task createTask(Task task) {
         // Ignore IDs supplied by callers
-        Task newTask = new Task(
-                null,
-                task.getTitle(),
-                task.getDescription(),
-                task.isCompleted()
-        );
+        Task newTask = new Task.Builder()
+            .title(task.getTitle())
+            .description(task.getDescription())
+            .completed(task.isCompleted())
+            .build();
 
         return taskRepository.save(newTask);
     }
@@ -45,12 +44,12 @@ public class TaskService {
     public Optional<Task> updateTask(Long id, Task updatedTask) {
         return taskRepository.findById(id)
                 .map(existingTask -> taskRepository.save(
-                        new Task(
-                                id,
-                                updatedTask.getTitle(),
-                                updatedTask.getDescription(),
-                                updatedTask.isCompleted()
-                        )
+                    new Task.Builder()
+                        .id(id)
+                        .title(updatedTask.getTitle())
+                        .description(updatedTask.getDescription())
+                        .completed(updatedTask.isCompleted())
+                        .build()
                 ));
     }
 
