@@ -42,17 +42,12 @@ public class TaskService {
         return taskRepository.save(newTask);
     }
 
-    public Optional<Task> updateTask(Long id, Task updatedTask) {
-        return taskRepository.findById(id)
-                .map(existingTask -> taskRepository.save(
-                        new Task(
-                                id,
-                                updatedTask.getTitle(),
-                                updatedTask.getDescription(),
-                                updatedTask.isCompleted()
-                        )
-                ));
-    }
+   
+public Optional<Task> updateTask(
+        Long id, Task updatedTask) {
+    return taskRepository.update(id, updatedTask);
+}
+
 
     public boolean deleteTask(Long id) {
         return taskRepository.deleteById(id);
