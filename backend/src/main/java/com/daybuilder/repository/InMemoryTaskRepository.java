@@ -47,23 +47,7 @@ public class InMemoryTaskRepository implements TaskRepository {
         return saved;
     }
 
-@Override
-public Optional<Task> update(Long id, Task task) {
-    if (id == null || task == null) {
-        return Optional.empty();
-    }
 
-    return Optional.ofNullable(
-        tasks.computeIfPresent(id, (key, existing) ->
-            new Task(
-                key,
-                task.getTitle(),
-                task.getDescription(),
-                task.isCompleted()
-            )
-        )
-    );
-}
     @Override
 public boolean deleteById(Long id) {
     if (id == null) {
