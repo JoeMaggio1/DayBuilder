@@ -24,9 +24,10 @@ class TaskServiceTest {
 
     @BeforeEach
     void setUp() {
-        // Each test gets a fresh repository and service
+        // Each test gets a fresh repository and service, seeded by the startup component
         taskRepository = new InMemoryTaskRepository();
         taskService = new TaskService(taskRepository);
+        new SampleTaskInitializer(taskService).run();
     }
 
     // ---------- getAllTasks ----------
@@ -300,7 +301,7 @@ class TaskServiceTest {
         // Arrange
         TaskRepository secondRepository = new InMemoryTaskRepository();
         TaskService secondService = new TaskService(secondRepository);
-
+        new SampleTaskInitializer(secondService).run();
         // Act
         taskService.createTask(
             new Task(null, "Only in first", "Test isolation", false)
@@ -315,13 +316,12 @@ class TaskServiceTest {
     }
 }
     // ---------- DAYB-81: Baseline ----------
+    // ---------- DAYB-83: Constructor no longer seeds data ----------
 
     @Test
-    void constructor_currentlyCreatesSampleTasks() {
-        // Documents current behavior: the constructor seeds sample data itself
+    void constructor_doesNotCreateSampleTasks() {
         TaskService freshService = new TaskService(new InMemoryTaskRepository());
 
-        assertEquals(3, freshService.getAllTasks().size());
-        assertEquals("Finish homework", freshService.getAllTasks().get(0).getTitle());
+        assertTrue(freshService.getAllTasks().isEmpty());
     }
 }
