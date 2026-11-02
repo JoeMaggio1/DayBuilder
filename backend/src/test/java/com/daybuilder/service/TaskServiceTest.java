@@ -314,3 +314,7 @@ class TaskServiceTest {
         assertEquals(3, secondRepository.findAll().size());
     }
 }
+@Test
+void constructorCurrentlyCreatesSampleTasks() {
+    assertFalse(new TaskService().getAllTasks().isEmpty());
+}
