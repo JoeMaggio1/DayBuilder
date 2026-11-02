@@ -104,7 +104,11 @@ describe("taskService", () => {
     it("createTask throws with the status and does not read the body", async () => {
       // Arrange
       const json = vi.fn();
-      globalThis.fetch = vi.fn().mockResolvedValue({ ok: false, status: 400, json });
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: false,
+        status: 400,
+        json,
+      });
 
       // Act + Assert
       await expect(createTask({ title: "" })).rejects.toThrow(
@@ -148,7 +152,9 @@ describe("taskService", () => {
       ["deleteTask", () => deleteTask(1)],
     ])("%s passes through network errors", async (_name, call) => {
       // Arrange: fetch itself rejects (e.g. backend not running)
-      globalThis.fetch = vi.fn().mockRejectedValue(new TypeError("Failed to fetch"));
+      globalThis.fetch = vi
+        .fn()
+        .mockRejectedValue(new TypeError("Failed to fetch"));
 
       // Act + Assert
       await expect(call()).rejects.toThrow("Failed to fetch");
@@ -164,6 +170,41 @@ describe("taskService", () => {
 
       // Act + Assert
       await expect(getTasks()).rejects.toThrow(SyntaxError);
+    });
+  });
+
+  // ---------- DAYB-75: refactoring verification ----------
+
+  describe("refactored API request behavior", () => {
+    it("does not parse JSON for a successful DELETE request", async () => {
+      // Arrange
+      const json = vi.fn();
+
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 204,
+        json,
+      });
+
+      // Act + Assert
+      await expect(deleteTask(4)).resolves.toBeUndefined();
+      expect(json).not.toHaveBeenCalled();
+    });
+
+    it("parses the JSON response exactly once for a successful GET", async () => {
+      // Arrange
+      const tasks = [{ id: 1, title: "Study" }];
+      const json = vi.fn().mockResolvedValue(tasks);
+
+      globalThis.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        status: 200,
+        json,
+      });
+
+      // Act + Assert
+      await expect(getTasks()).resolves.toEqual(tasks);
+      expect(json).toHaveBeenCalledTimes(1);
     });
   });
 });
