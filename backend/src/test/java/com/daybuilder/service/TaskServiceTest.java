@@ -314,7 +314,14 @@ class TaskServiceTest {
         assertEquals(3, secondRepository.findAll().size());
     }
 }
-@Test
-void constructorCurrentlyCreatesSampleTasks() {
-    assertFalse(new TaskService().getAllTasks().isEmpty());
+    // ---------- DAYB-81: Baseline ----------
+
+    @Test
+    void constructor_currentlyCreatesSampleTasks() {
+        // Documents current behavior: the constructor seeds sample data itself
+        TaskService freshService = new TaskService(new InMemoryTaskRepository());
+
+        assertEquals(3, freshService.getAllTasks().size());
+        assertEquals("Finish homework", freshService.getAllTasks().get(0).getTitle());
+    }
 }
