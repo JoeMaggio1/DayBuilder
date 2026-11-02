@@ -13,13 +13,8 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
 
-    public TaskService(TaskRepository taskRepository) {
+        public TaskService(TaskRepository taskRepository) {
         this.taskRepository = taskRepository;
-
-        // Keep the original sample tasks
-        createTask(new Task(null, "Finish homework", "Complete the assigned homework", false));
-        createTask(new Task(null, "Go to class", "Attend afternoon class", false));
-        createTask(new Task(null, "Study", "Review notes for the quiz", false));
     }
 
     public List<Task> getAllTasks() {
