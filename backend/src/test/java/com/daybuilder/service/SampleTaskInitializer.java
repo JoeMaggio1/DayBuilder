@@ -1,3 +1,8 @@
+package com.team.taskapp.service; // copy the exact package line from TaskService.java
+
+import org.springframework.boot.CommandLineRunner;
+import org.springframework.stereotype.Component;
+
 @Component
 public class SampleTaskInitializer implements CommandLineRunner {
     private final TaskService taskService;
@@ -8,7 +13,6 @@ public class SampleTaskInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) {
-        // move the sample tasks from the TaskService constructor here, e.g.
-        // taskService.createTask(new Task(...));
+        // paste the sample tasks here
     }
 }
