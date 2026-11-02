@@ -313,7 +313,7 @@ class TaskServiceTest {
         assertEquals(4, taskRepository.findAll().size());
         assertEquals(3, secondRepository.findAll().size());
     }
-}
+
     // ---------- DAYB-81: Baseline ----------
 
     @Test
