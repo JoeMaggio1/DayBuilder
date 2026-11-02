@@ -40,28 +40,22 @@ public class TaskService {
         );
     }
 
+    // DAYB-79: Use helper when creating Task
     public Task createTask(Task task) {
-        // Ignore IDs supplied by callers
-        Task newTask = new Task(
-                null,
-                task.getTitle(),
-                task.getDescription(),
-                task.isCompleted()
-        );
+        // Ignore caller-supplied ID
+        Task newTask = buildTask(null, task);
 
         return taskRepository.save(newTask);
     }
 
+    // DAYB-79: Use helper when updating Task
     public Optional<Task> updateTask(Long id, Task updatedTask) {
         return taskRepository.findById(id)
-                .map(existingTask -> taskRepository.save(
-                        new Task(
-                                id,
-                                updatedTask.getTitle(),
-                                updatedTask.getDescription(),
-                                updatedTask.isCompleted()
+                .map(existingTask ->
+                        taskRepository.save(
+                                buildTask(existingTask.getId(), updatedTask)
                         )
-                ));
+                );
     }
 
     public boolean deleteTask(Long id) {
