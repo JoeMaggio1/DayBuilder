@@ -314,7 +314,7 @@ class TaskServiceTest {
         assertEquals(4, taskRepository.findAll().size());
         assertEquals(3, secondRepository.findAll().size());
     }
-}
+
     // ---------- DAYB-81: Baseline ----------
     // ---------- DAYB-83: Constructor no longer seeds data ----------
 
