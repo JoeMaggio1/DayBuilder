@@ -30,6 +30,16 @@ public class TaskService {
         return taskRepository.findById(id);
     }
 
+    // DAYB-78: Reusable Task construction helper
+    private Task buildTask(Long id, Task source) {
+        return new Task(
+                id,
+                source.getTitle(),
+                source.getDescription(),
+                source.isCompleted()
+        );
+    }
+
     public Task createTask(Task task) {
         // Ignore IDs supplied by callers
         Task newTask = new Task(
