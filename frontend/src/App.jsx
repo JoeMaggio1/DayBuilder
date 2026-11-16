@@ -1,71 +1,40 @@
-import { useEffect, useState } from "react";
-import TaskList from "./TaskList";
-import TaskForm from "./TaskForm";
-import { getTasks, deleteTask, updateTask } from "./services/taskService";
+import { Routes, Route, Link } from "react-router-dom";
 
+import TasksPage from "./pages/TasksPage";
+import CategoriesPage from "./pages/CategoriesPage";
+import AccountPage from "./pages/AccountPage";
+import SignInPage from "./pages/SignInPage";
+import SignUpPage from "./pages/SignUpPage";
+import NotFoundPage from "./pages/NotFoundPage";
+import ProtectedRoute from "./ProtectedRoute";
 
-function App() {
-  const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  useEffect(() => {
-    getTasks()
-      .then((data) => setTasks(data))
-      .catch(() => setError("Could not load tasks. Is the backend running?"))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const handleTaskAdded = (newTask) => {
-    setTasks((currentTasks) => [...currentTasks, newTask]);
-  };
-
-  
-async function handleEdit(id, updatedTask) {
-  try {
-    setError(null);
-
-    const savedTask = await updateTask(id, updatedTask);
-
-    setTasks((currentTasks) =>
-      currentTasks.map((task) =>
-        task.id === id ? savedTask : task
-      )
-    );
-  } catch (err) {
-    setError(err.message);
-  }
-}
-
-
-  async function handleDelete(id) {
-    try {
-      setError(null);
-
-      await deleteTask(id);
-
-      setTasks((currentTasks) => currentTasks.filter((task) => task.id !== id));
-    } catch (err) {
-      setError(err.message);
-    }
-  }
-
+export default function App() {
   return (
     <>
-      <h1>DayBuilder</h1>
-      <p>Plan your day and manage your tasks.</p>
+      <nav aria-label="Main navigation">
+        <Link to="/">Tasks</Link>
+        {" | "}
+        <Link to="/categories">Categories</Link>
+        {" | "}
+        <Link to="/account">Account</Link>
+        {" | "}
+        <Link to="/signin">Sign In</Link>
+        {" | "}
+        <Link to="/signup">Sign Up</Link>
+      </nav>
 
-      <TaskForm onTaskAdded={handleTaskAdded} />
+      <Routes>
+        <Route path="/signin" element={<SignInPage />} />
+        <Route path="/signup" element={<SignUpPage />} />
 
-      {loading && <p>Loading tasks...</p>}
+        <Route element={<ProtectedRoute />}>
+          <Route path="/" element={<TasksPage />} />
+          <Route path="/categories" element={<CategoriesPage />} />
+          <Route path="/account" element={<AccountPage />} />
+        </Route>
 
-      {error && <p role="alert">{error}</p>}
-
-      {!loading && (
-        <TaskList tasks={tasks} onEdit={handleEdit} onDelete={handleDelete} />
-      )}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
     </>
   );
 }
-
-export default App;
