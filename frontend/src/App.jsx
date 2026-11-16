@@ -7,8 +7,12 @@ import SignInPage from "./pages/SignInPage";
 import SignUpPage from "./pages/SignUpPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import ProtectedRoute from "./ProtectedRoute";
+import { useAuth } from "./context/AuthContext";
 
 export default function App() {
+  // DAYB-95: only admins get the "Clear completed tasks" button
+  const { role } = useAuth();
+
   return (
     <>
       <nav aria-label="Main navigation">
@@ -28,7 +32,10 @@ export default function App() {
         <Route path="/signup" element={<SignUpPage />} />
 
         <Route element={<ProtectedRoute />}>
-          <Route path="/" element={<TasksPage />} />
+          <Route
+            path="/"
+            element={<TasksPage isAdmin={role === "ADMIN"} />}
+          />
           <Route path="/categories" element={<CategoriesPage />} />
           <Route path="/account" element={<AccountPage />} />
         </Route>
