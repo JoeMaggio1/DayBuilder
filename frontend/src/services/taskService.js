@@ -20,7 +20,12 @@ async function request(path, options = {}) {
   if (!response.ok) {
     const method = options.method || "GET";
 
-    throw new Error(`${method} ${path} failed with status ${response.status}`);
+    const error = new Error(
+      `${method} ${path} failed with status ${response.status}`,
+    );
+    // DAYB-95: keep the status so callers can handle 403 differently
+    error.status = response.status;
+    throw error;
   }
 
   // DELETE requests do not return JSON
@@ -61,6 +66,13 @@ export async function updateTask(id, task) {
 // DELETE /tasks/{id}
 export async function deleteTask(id) {
   return request(`/tasks/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// DAYB-95: DELETE /tasks/completed (ADMIN only) — returns nothing
+export async function clearCompletedTasks() {
+  return request("/tasks/completed", {
     method: "DELETE",
   });
 }
