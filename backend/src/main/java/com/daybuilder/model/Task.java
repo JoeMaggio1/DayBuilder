@@ -1,5 +1,6 @@
-
 package com.daybuilder.model;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import jakarta.persistence.*;
 
@@ -19,6 +20,13 @@ public class Task {
 
     @Column(nullable = false)
     private boolean completed;
+
+    // DAYB-88: Each task belongs to one user (foreign key column "user_id").
+    // @JsonIgnore keeps the owner (and their password hash) out of task JSON.
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User owner;
 
     protected Task() {
         // Required by JPA
@@ -62,5 +70,15 @@ public class Task {
 
     public void setCompleted(boolean completed) {
         this.completed = completed;
+    }
+
+    // DAYB-88
+    public User getOwner() {
+        return owner;
+    }
+
+    // DAYB-88
+    public void setOwner(User owner) {
+        this.owner = owner;
     }
 }
