@@ -1,25 +1,29 @@
-// All calls to the DayBuilder backend go through this file.
-// Components call these functions instead of using fetch() directly.
 const API_BASE_URL = "http://localhost:8080";
 
-// Shared helper for API requests
+// Shared helper for all task API requests
 async function request(path, options = {}) {
   const url = `${API_BASE_URL}${path}`;
 
-  // Preserve the original fetch behavior for GET requests
-  const response =
-    Object.keys(options).length === 0
-      ? await fetch(url)
-      : await fetch(url, options);
+  // Get the token saved after sign-in
+  const token = localStorage.getItem("authToken");
 
-  // Handle unsuccessful responses
+  const headers = {
+    ...options.headers,
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  };
+
+  const response = await fetch(url, {
+    ...options,
+    headers,
+  });
+
   if (!response.ok) {
     const method = options.method || "GET";
 
     throw new Error(`${method} ${path} failed with status ${response.status}`);
   }
 
-  // DELETE requests do not return a JSON response
+  // DELETE requests do not return JSON
   if (options.method === "DELETE") {
     return;
   }
@@ -27,30 +31,34 @@ async function request(path, options = {}) {
   return response.json();
 }
 
-// GET /tasks — returns all tasks
+// GET /tasks
 export async function getTasks() {
   return request("/tasks");
 }
 
-// POST /tasks — returns the saved task (with its new id)
+// POST /tasks
 export async function createTask(task) {
   return request("/tasks", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(task),
   });
 }
 
-// PUT /tasks/{id} — returns the updated task
+// PUT /tasks/{id}
 export async function updateTask(id, task) {
   return request(`/tasks/${id}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(task),
   });
 }
 
-// DELETE /tasks/{id} — returns nothing
+// DELETE /tasks/{id}
 export async function deleteTask(id) {
   return request(`/tasks/${id}`, {
     method: "DELETE",
