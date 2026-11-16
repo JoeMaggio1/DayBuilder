@@ -1,132 +1,119 @@
 
 package com.daybuilder.controller;
 
-import com.daybuilder.backend.BackendApplication;
+import com.daybuilder.model.Role;
 import com.daybuilder.model.User;
 import com.daybuilder.repository.UserRepository;
+import com.daybuilder.security.JwtService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.MediaType;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.context.WebApplicationContext;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+
+import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
-@SpringBootTest(classes = BackendApplication.class)
-@ActiveProfiles("test")
-@Transactional
 class AuthControllerTest {
 
-    @Autowired
-    private WebApplicationContext context;
-
-    @Autowired
     private UserRepository userRepository;
-
-    @Autowired
+    private JwtService jwtService;
     private PasswordEncoder passwordEncoder;
-
-    private MockMvc mockMvc;
+    private AuthController authController;
 
     @BeforeEach
     void setUp() {
-        mockMvc = MockMvcBuilders
-                .webAppContextSetup(context)
-                .build();
+        userRepository = mock(UserRepository.class);
+        jwtService = mock(JwtService.class);
+        passwordEncoder = new BCryptPasswordEncoder();
+
+        authController = new AuthController(
+            userRepository,
+            passwordEncoder,
+            jwtService
+        );
     }
 
     @Test
-    void signupCreatesUserWithHashedPassword() throws Exception {
-
-        mockMvc.perform(post("/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                      "email": "STUDENT@example.com",
-                      "password": "SecurePassword123!"
-                    }
-                    """))
-                .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.email")
-                        .value("student@example.com"))
-                .andExpect(jsonPath("$.role")
-                        .value("USER"))
-                .andExpect(jsonPath("$.passwordHash")
-                        .doesNotExist());
-
-        User saved = userRepository
-                .findByEmail("student@example.com")
-                .orElseThrow();
-
-        assertNotNull(saved.getId());
-
-        assertNotEquals(
-                "SecurePassword123!",
-                saved.getPasswordHash()
+    void validCredentialsReturnToken() {
+        User user = new User(
+            "test@example.com",
+            passwordEncoder.encode("password123"),
+            Role.USER
         );
 
-        assertTrue(passwordEncoder.matches(
-                "SecurePassword123!",
-                saved.getPasswordHash()
-        ));
+        when(userRepository.findByEmail("test@example.com"))
+            .thenReturn(Optional.of(user));
+
+        when(jwtService.generateToken(any(), eq("USER")))
+            .thenReturn("test-jwt-token");
+
+        ResponseEntity<?> response = authController.signIn(
+            new AuthController.SignInRequest(
+                "test@example.com",
+                "password123"
+            )
+        );
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+
+        assertEquals(
+            "test-jwt-token",
+            ((Map<?, ?>) response.getBody()).get("token")
+        );
     }
 
     @Test
-    void duplicateEmailReturns409() throws Exception {
+    void incorrectPasswordReturnsUnauthorized() {
+        User user = new User(
+            "test@example.com",
+            passwordEncoder.encode("correctPassword"),
+            Role.USER
+        );
 
-        String signup = """
-            {
-              "email": "duplicate@example.com",
-              "password": "SecurePassword123!"
-            }
-            """;
+        when(userRepository.findByEmail("test@example.com"))
+            .thenReturn(Optional.of(user));
 
-        mockMvc.perform(post("/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(signup))
-                .andExpect(status().isCreated());
+        ResponseEntity<?> response = authController.signIn(
+            new AuthController.SignInRequest(
+                "test@example.com",
+                "wrongPassword"
+            )
+        );
 
-        mockMvc.perform(post("/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content(signup))
-                .andExpect(status().isConflict());
+        assertEquals(
+            HttpStatus.UNAUTHORIZED,
+            response.getStatusCode()
+        );
+
+        verify(jwtService, never())
+            .generateToken(any(), any());
     }
 
     @Test
-    void invalidEmailReturns400() throws Exception {
+    void unknownEmailReturnsUnauthorized() {
+        when(userRepository.findByEmail("missing@example.com"))
+            .thenReturn(Optional.empty());
 
-        mockMvc.perform(post("/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                      "email": "not-an-email",
-                      "password": "SecurePassword123!"
-                    }
-                    """))
-                .andExpect(status().isBadRequest());
-    }
+        ResponseEntity<?> response = authController.signIn(
+            new AuthController.SignInRequest(
+                "missing@example.com",
+                "password123"
+            )
+        );
 
-    @Test
-    void shortPasswordReturns400() throws Exception {
+        assertEquals(
+            HttpStatus.UNAUTHORIZED,
+            response.getStatusCode()
+        );
 
-        mockMvc.perform(post("/auth/signup")
-                .contentType(MediaType.APPLICATION_JSON)
-                .content("""
-                    {
-                      "email": "short@example.com",
-                      "password": "123"
-                    }
-                    """))
-                .andExpect(status().isBadRequest());
+        verify(jwtService, never())
+            .generateToken(any(), any());
     }
 }

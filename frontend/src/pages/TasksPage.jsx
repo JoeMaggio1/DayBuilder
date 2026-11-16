@@ -1,10 +1,16 @@
 import { useEffect, useState } from "react";
 import TaskList from "../TaskList";
 import TaskForm from "../TaskForm";
-import { getTasks, deleteTask, updateTask } from "../services/taskService";
+import {
+  getTasks,
+  deleteTask,
+  updateTask,
+  clearCompletedTasks,
+} from "../services/taskService";
 import { getCategories } from "../services/categoryService";
 
-function TasksPage() {
+// DAYB-95: isAdmin comes from App, which reads the signed-in user's role
+function TasksPage({ isAdmin = false }) {
   const [tasks, setTasks] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -59,12 +65,38 @@ function TasksPage() {
     }
   }
 
+  // DAYB-95: Admin-only action. The backend still checks the role,
+  // so a 403 is handled in case someone gets the button to show anyway.
+  async function handleClearCompleted() {
+    try {
+      setError(null);
+
+      await clearCompletedTasks();
+
+      setTasks((currentTasks) =>
+        currentTasks.filter((task) => !task.completed),
+      );
+    } catch (err) {
+      if (err.status === 403) {
+        setError("Only admins can clear completed tasks.");
+      } else {
+        setError("Could not clear completed tasks. Please try again.");
+      }
+    }
+  }
+
   return (
     <>
       <h1>DayBuilder</h1>
       <p>Plan your day and manage your tasks.</p>
 
       <TaskForm onTaskAdded={handleTaskAdded} categories={categories} />
+
+      {isAdmin && (
+        <button type="button" onClick={handleClearCompleted}>
+          Clear completed tasks
+        </button>
+      )}
 
       {loading && <p>Loading tasks...</p>}
 
