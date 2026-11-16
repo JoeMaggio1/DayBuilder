@@ -1,6 +1,5 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import App from "./App";
+import TasksPage from "./pages/TasksPage";
 import { getTasks, deleteTask } from "./services/taskService";
 
 // Mock the service functions so tests don't need the backend running
@@ -18,10 +17,10 @@ describe("App", () => {
   it("renders the DayBuilder heading", async () => {
     getTasks.mockResolvedValue([]);
 
-    render(<App />);
+    render(<TasksPage />);
 
     expect(
-      screen.getByRole("heading", { name: /dayBuilder/i })
+      screen.getByRole("heading", { name: /dayBuilder/i }),
     ).toBeInTheDocument();
 
     await screen.findByText(/no tasks yet/i);
@@ -30,10 +29,10 @@ describe("App", () => {
   it("renders the intro text", async () => {
     getTasks.mockResolvedValue([]);
 
-    render(<App />);
+    render(<TasksPage />);
 
     expect(
-      screen.getByText(/plan your day and manage your tasks/i)
+      screen.getByText(/plan your day and manage your tasks/i),
     ).toBeInTheDocument();
 
     await screen.findByText(/no tasks yet/i);
@@ -57,7 +56,7 @@ describe("App", () => {
     ]);
 
     // Act
-    render(<App />);
+    render(<TasksPage />);
 
     // Assert
     expect(await screen.findByText("Finish homework")).toBeInTheDocument();
@@ -69,11 +68,11 @@ describe("App", () => {
     getTasks.mockRejectedValue(new Error("network down"));
 
     // Act
-    render(<App />);
+    render(<TasksPage />);
 
     // Assert
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      /could not load tasks/i
+      /could not load tasks/i,
     );
   });
 
@@ -90,7 +89,7 @@ describe("App", () => {
 
     deleteTask.mockResolvedValue(undefined);
 
-    render(<App />);
+    render(<TasksPage />);
 
     await screen.findByText("Finish homework");
 
@@ -123,7 +122,7 @@ describe("App", () => {
 
     deleteTask.mockResolvedValue(undefined);
 
-    render(<App />);
+    render(<TasksPage />);
 
     expect(await screen.findByText("Finish homework")).toBeInTheDocument();
     expect(screen.getByText("Go to class")).toBeInTheDocument();
@@ -158,7 +157,7 @@ describe("App", () => {
 
     deleteTask.mockRejectedValue(new Error("Delete failed"));
 
-    render(<App />);
+    render(<TasksPage />);
 
     expect(await screen.findByText("Finish homework")).toBeInTheDocument();
 
@@ -172,7 +171,7 @@ describe("App", () => {
 
     // Assert: error appears and task remains visible
     expect(await screen.findByRole("alert")).toHaveTextContent(
-      /delete failed/i
+      /delete failed/i,
     );
 
     expect(screen.getByText("Finish homework")).toBeInTheDocument();
