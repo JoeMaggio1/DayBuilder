@@ -1,13 +1,11 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "./context/AuthContext";
 
 export default function ProtectedRoute() {
+  const { isAuthenticated } = useAuth();
   const location = useLocation();
 
-  // Temporary integration point until frontend authentication is implemented.
-  // Token presence is only a UI routing check, not proof of authentication.
-  const token = localStorage.getItem("authToken");
-
-  if (!token) {
+  if (!isAuthenticated) {
     return <Navigate to="/signin" replace state={{ from: location }} />;
   }
 

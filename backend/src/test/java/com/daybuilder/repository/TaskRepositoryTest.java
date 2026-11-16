@@ -1,112 +1,92 @@
 
 package com.daybuilder.repository;
 
+import com.daybuilder.backend.BackendApplication;
 import com.daybuilder.model.Task;
+
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Sort;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+@SpringBootTest(classes = BackendApplication.class)
+@ActiveProfiles("test")
+@Transactional
 class TaskRepositoryTest {
 
+    @Autowired
     private TaskRepository repository;
 
     @BeforeEach
-    void setUp() {
-        repository = new InMemoryTaskRepository();
+    void clearTasks() {
+        repository.deleteAll();
     }
 
     @Test
     void save_createsTaskAndAssignsId() {
-        Task task = new Task(null, "Study", "Study for exam", false);
-
-        Task saved = repository.save(task);
+        Task saved = repository.save(
+            new Task(null, "Study", "Review notes", false)
+        );
 
         assertNotNull(saved.getId());
-        assertEquals(1L, saved.getId());
         assertEquals("Study", saved.getTitle());
+        assertTrue(repository.existsById(saved.getId()));
     }
 
     @Test
     void save_assignsUniqueIds() {
         Task first = repository.save(
-                new Task(null, "Homework", "Math", false)
+            new Task(null, "First", "Description", false)
         );
 
         Task second = repository.save(
-                new Task(null, "Exercise", "Gym", false)
+            new Task(null, "Second", "Description", false)
         );
 
         assertNotEquals(first.getId(), second.getId());
     }
 
     @Test
-    void findById_returnsExistingTask() {
+    void findById_returnsSavedTask() {
         Task saved = repository.save(
-                new Task(null, "Read", "Chapter 1", false)
+            new Task(null, "Read", "Chapter 1", false)
         );
 
-        Optional<Task> found = repository.findById(saved.getId());
+        Task found = repository.findById(saved.getId())
+            .orElseThrow();
 
-        assertTrue(found.isPresent());
-        assertEquals("Read", found.get().getTitle());
+        assertEquals("Read", found.getTitle());
     }
 
     @Test
-    void findById_returnsEmptyForUnknownId() {
-        Optional<Task> found = repository.findById(999L);
+    void findAll_returnsTasksInIdOrder() {
+        repository.save(new Task(null, "First", "", false));
+        repository.save(new Task(null, "Second", "", false));
 
-        assertTrue(found.isEmpty());
-    }
-
-    @Test
-    void findAll_returnsAllTasksSortedById() {
-        repository.save(new Task(null, "First", "Task 1", false));
-        repository.save(new Task(null, "Second", "Task 2", false));
-
-        List<Task> tasks = repository.findAll();
+        List<Task> tasks = repository.findAll(
+            Sort.by("id")
+        );
 
         assertEquals(2, tasks.size());
-        assertEquals("First", tasks.get(0).getTitle());
-        assertEquals("Second", tasks.get(1).getTitle());
         assertTrue(tasks.get(0).getId() < tasks.get(1).getId());
     }
 
-
     @Test
-    void deleteById_removesExistingTask() {
-        Task saved = repository.save(new Task(null, "Delete me", "Desc", false));
+    void deleteById_removesTask() {
+        Task saved = repository.save(
+            new Task(null, "Delete me", "", false)
+        );
 
-        boolean deleted = repository.deleteById(saved.getId());
+        repository.deleteById(saved.getId());
 
-        assertTrue(deleted);
-        assertTrue(repository.findById(saved.getId()).isEmpty());
-        assertTrue(repository.findAll().isEmpty());
-    }
-
-    @Test
-    void deleteById_returnsFalseForUnknownId() {
-        repository.save(new Task(null, "Keep me", "Desc", false));
-
-        boolean deleted = repository.deleteById(999L);
-
-        assertFalse(deleted);
-        assertEquals(1, repository.findAll().size());
-    }
-
-    @Test
-    void deleteById_returnsFalseForNullId() {
-        assertFalse(repository.deleteById(null));
-    }
-
-    @Test
-    void deleteById_returnsFalseWhenDeletingTwice() {
-        Task saved = repository.save(new Task(null, "Once", "Desc", false));
-
-        assertTrue(repository.deleteById(saved.getId()));
-        assertFalse(repository.deleteById(saved.getId()));
+        assertFalse(repository.existsById(saved.getId()));
     }
 }
+

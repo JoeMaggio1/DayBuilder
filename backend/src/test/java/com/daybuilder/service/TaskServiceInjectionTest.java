@@ -1,17 +1,21 @@
+
 package com.daybuilder.service;
 
+import com.daybuilder.backend.BackendApplication;
 import com.daybuilder.model.Task;
 import com.daybuilder.repository.TaskRepository;
+
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * DAYB-63: Verifies Spring injects the TaskRepository bean into TaskService.
- */
-@SpringBootTest(classes = com.daybuilder.backend.BackendApplication.class)
+@SpringBootTest(classes = BackendApplication.class)
+@ActiveProfiles("test")
+@Transactional
 class TaskServiceInjectionTest {
 
     @Autowired
@@ -27,12 +31,14 @@ class TaskServiceInjectionTest {
     }
 
     @Test
-    void taskServiceUsesTheInjectedRepository() {
+    void taskServiceUsesInjectedRepository() {
         Task created = taskService.createTask(
-                new Task(null, "Injected", "Wiring check", false)
+            new Task(null, "Injected", "Wiring check", false)
         );
 
-        // The task created through the service is visible in the same repository bean
-        assertTrue(taskRepository.findById(created.getId()).isPresent());
+        assertTrue(
+            taskRepository.findById(created.getId()).isPresent()
+        );
     }
 }
+

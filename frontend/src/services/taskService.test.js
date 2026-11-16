@@ -1,210 +1,339 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { beforeEach, afterEach, describe, it, expect, vi } from "vitest";
 import { getTasks, createTask, updateTask, deleteTask } from "./taskService";
 
-// Fake fetch so these tests never hit a real server
-function mockFetch(ok, body, status = 200) {
-  globalThis.fetch = vi.fn().mockResolvedValue({
-    ok,
-    status,
-    json: () => Promise.resolve(body),
-  });
-}
-
 describe("taskService", () => {
-  const originalFetch = globalThis.fetch;
-
   beforeEach(() => {
-    vi.restoreAllMocks();
+    vi.stubGlobal("fetch", vi.fn());
+    localStorage.removeItem("authToken");
   });
 
   afterEach(() => {
-    globalThis.fetch = originalFetch;
+    vi.unstubAllGlobals();
+    localStorage.removeItem("authToken");
   });
 
   it("getTasks calls GET /tasks and returns the list", async () => {
-    // Arrange
-    mockFetch(true, [{ id: 1, title: "Study" }]);
+    const expectedTasks = [{ id: 1, title: "Study", completed: false }];
 
-    // Act
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: vi.fn().mockResolvedValue(expectedTasks),
+    });
+
     const tasks = await getTasks();
 
-    // Assert
-    expect(fetch).toHaveBeenCalledWith("http://localhost:8080/tasks");
-    expect(tasks).toEqual([{ id: 1, title: "Study" }]);
+    expect(fetch).toHaveBeenCalledWith("http://localhost:8080/tasks", {
+      headers: {},
+    });
+
+    expect(tasks).toEqual(expectedTasks);
   });
 
   it("createTask sends a POST with the task as JSON", async () => {
-    // Arrange
-    const newTask = { title: "Gym", description: "Leg day", completed: false };
-    mockFetch(true, { id: 4, ...newTask }, 201);
+    const newTask = {
+      title: "Study",
+      description: "Finish homework",
+    };
 
-    // Act
-    const saved = await createTask(newTask);
+    const savedTask = { id: 1, ...newTask };
 
-    // Assert
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: vi.fn().mockResolvedValue(savedTask),
+    });
+
+    const result = await createTask(newTask);
+
     expect(fetch).toHaveBeenCalledWith("http://localhost:8080/tasks", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: {
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify(newTask),
     });
-    expect(saved.id).toBe(4);
+
+    expect(result).toEqual(savedTask);
   });
 
   it("updateTask sends a PUT to /tasks/{id}", async () => {
-    // Arrange
-    const changes = { title: "Gym", description: "Arm day", completed: true };
-    mockFetch(true, { id: 4, ...changes });
+    const updatedTask = {
+      title: "Updated task",
+      completed: true,
+    };
 
-    // Act
-    const updated = await updateTask(4, changes);
-
-    // Assert
-    expect(fetch).toHaveBeenCalledWith("http://localhost:8080/tasks/4", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(changes),
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      json: vi.fn().mockResolvedValue({
+        id: 3,
+        ...updatedTask,
+      }),
     });
-    expect(updated.completed).toBe(true);
+
+    const result = await updateTask(3, updatedTask);
+
+    expect(fetch).toHaveBeenCalledWith("http://localhost:8080/tasks/3", {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(updatedTask),
+    });
+
+    expect(result.id).toBe(3);
   });
 
   it("deleteTask sends a DELETE to /tasks/{id}", async () => {
-    // Arrange
-    mockFetch(true, null, 204);
+    fetch.mockResolvedValueOnce({
+      ok: true,
+      status: 204,
+    });
 
-    // Act
-    await deleteTask(4);
+    const result = await deleteTask(4);
 
-    // Assert
     expect(fetch).toHaveBeenCalledWith("http://localhost:8080/tasks/4", {
       method: "DELETE",
+      headers: {},
     });
+
+    expect(result).toBeUndefined();
   });
 
   it("throws when the server returns an error", async () => {
-    // Arrange
-    mockFetch(false, null, 404);
+    fetch.mockResolvedValueOnce({
+      ok: false,
+      status: 500,
+    });
 
-    // Act + Assert
-    await expect(deleteTask(999)).rejects.toThrow(/404/);
+    await expect(getTasks()).rejects.toThrow(
+      "GET /tasks failed with status 500",
+    );
   });
-
-  // ---------- DAYB-72: error handling ----------
 
   describe("error handling", () => {
     it("getTasks throws with the status when the server fails", async () => {
-      // Arrange
-      mockFetch(false, null, 500);
+      fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 503,
+      });
 
-      // Act + Assert
       await expect(getTasks()).rejects.toThrow(
-        "GET /tasks failed with status 500"
+        "GET /tasks failed with status 503",
       );
     });
 
     it("createTask throws with the status and does not read the body", async () => {
-      // Arrange
       const json = vi.fn();
-      globalThis.fetch = vi.fn().mockResolvedValue({
+
+      fetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
         json,
       });
 
-      // Act + Assert
-      await expect(createTask({ title: "" })).rejects.toThrow(
-        "POST /tasks failed with status 400"
+      await expect(createTask({ title: "Invalid task" })).rejects.toThrow(
+        "POST /tasks failed with status 400",
       );
+
       expect(json).not.toHaveBeenCalled();
     });
 
     it("updateTask throws with the id and status for a missing task", async () => {
-      // Arrange
-      mockFetch(false, null, 404);
+      fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      });
 
-      // Act + Assert
-      await expect(updateTask(42, { title: "Ghost" })).rejects.toThrow(
-        "PUT /tasks/42 failed with status 404"
+      await expect(updateTask(99, { title: "Missing" })).rejects.toThrow(
+        "PUT /tasks/99 failed with status 404",
       );
     });
 
     it("deleteTask throws with the id and status for a missing task", async () => {
-      // Arrange
-      mockFetch(false, null, 404);
+      fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+      });
 
-      // Act + Assert
-      await expect(deleteTask(999)).rejects.toThrow(
-        "DELETE /tasks/999 failed with status 404"
+      await expect(deleteTask(99)).rejects.toThrow(
+        "DELETE /tasks/99 failed with status 404",
       );
     });
 
     it("deleteTask resolves to undefined on success", async () => {
-      // Arrange
-      mockFetch(true, null, 204);
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+      });
 
-      // Act + Assert
-      await expect(deleteTask(4)).resolves.toBeUndefined();
+      await expect(deleteTask(1)).resolves.toBeUndefined();
     });
 
-    it.each([
-      ["getTasks", () => getTasks()],
-      ["createTask", () => createTask({ title: "Gym" })],
-      ["updateTask", () => updateTask(1, { title: "Gym" })],
-      ["deleteTask", () => deleteTask(1)],
-    ])("%s passes through network errors", async (_name, call) => {
-      // Arrange: fetch itself rejects (e.g. backend not running)
-      globalThis.fetch = vi
-        .fn()
-        .mockRejectedValue(new TypeError("Failed to fetch"));
+    it("getTasks passes through network errors", async () => {
+      fetch.mockRejectedValueOnce(new Error("Network error"));
 
-      // Act + Assert
-      await expect(call()).rejects.toThrow("Failed to fetch");
+      await expect(getTasks()).rejects.toThrow("Network error");
+    });
+
+    it("createTask passes through network errors", async () => {
+      fetch.mockRejectedValueOnce(new Error("Network error"));
+
+      await expect(createTask({ title: "Study" })).rejects.toThrow(
+        "Network error",
+      );
+    });
+
+    it("updateTask passes through network errors", async () => {
+      fetch.mockRejectedValueOnce(new Error("Network error"));
+
+      await expect(updateTask(1, { title: "Updated" })).rejects.toThrow(
+        "Network error",
+      );
+    });
+
+    it("deleteTask passes through network errors", async () => {
+      fetch.mockRejectedValueOnce(new Error("Network error"));
+
+      await expect(deleteTask(1)).rejects.toThrow("Network error");
     });
 
     it("getTasks throws when the response body is not valid JSON", async () => {
-      // Arrange
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      fetch.mockResolvedValueOnce({
         ok: true,
-        status: 200,
-        json: () => Promise.reject(new SyntaxError("Unexpected token <")),
+        json: vi.fn().mockRejectedValue(new SyntaxError("Unexpected token")),
       });
 
-      // Act + Assert
       await expect(getTasks()).rejects.toThrow(SyntaxError);
     });
   });
 
-  // ---------- DAYB-75: refactoring verification ----------
-
   describe("refactored API request behavior", () => {
     it("does not parse JSON for a successful DELETE request", async () => {
-      // Arrange
       const json = vi.fn();
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      fetch.mockResolvedValueOnce({
         ok: true,
         status: 204,
         json,
       });
 
-      // Act + Assert
-      await expect(deleteTask(4)).resolves.toBeUndefined();
+      await deleteTask(2);
+
       expect(json).not.toHaveBeenCalled();
     });
 
     it("parses the JSON response exactly once for a successful GET", async () => {
-      // Arrange
-      const tasks = [{ id: 1, title: "Study" }];
-      const json = vi.fn().mockResolvedValue(tasks);
+      const json = vi.fn().mockResolvedValue([]);
 
-      globalThis.fetch = vi.fn().mockResolvedValue({
+      fetch.mockResolvedValueOnce({
         ok: true,
-        status: 200,
         json,
       });
 
-      // Act + Assert
-      await expect(getTasks()).resolves.toEqual(tasks);
+      await getTasks();
+
       expect(json).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe("authentication headers", () => {
+    it("sends the auth token with GET requests", async () => {
+      localStorage.setItem("authToken", "test-token");
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue([]),
+      });
+
+      await getTasks();
+
+      expect(fetch).toHaveBeenCalledWith("http://localhost:8080/tasks", {
+        headers: {
+          Authorization: "Bearer test-token",
+        },
+      });
+    });
+
+    it("sends the auth token with POST requests", async () => {
+      localStorage.setItem("authToken", "test-token");
+
+      const task = { title: "New task" };
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          id: 1,
+          ...task,
+        }),
+      });
+
+      await createTask(task);
+
+      expect(fetch).toHaveBeenCalledWith("http://localhost:8080/tasks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer test-token",
+        },
+        body: JSON.stringify(task),
+      });
+    });
+
+    it("sends the auth token with PUT requests", async () => {
+      localStorage.setItem("authToken", "test-token");
+
+      const task = { title: "Updated task" };
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue({
+          id: 1,
+          ...task,
+        }),
+      });
+
+      await updateTask(1, task);
+
+      expect(fetch).toHaveBeenCalledWith("http://localhost:8080/tasks/1", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer test-token",
+        },
+        body: JSON.stringify(task),
+      });
+    });
+
+    it("sends the auth token with DELETE requests", async () => {
+      localStorage.setItem("authToken", "test-token");
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        status: 204,
+      });
+
+      await deleteTask(1);
+
+      expect(fetch).toHaveBeenCalledWith("http://localhost:8080/tasks/1", {
+        method: "DELETE",
+        headers: {
+          Authorization: "Bearer test-token",
+        },
+      });
+    });
+
+    it("does not send an Authorization header when signed out", async () => {
+      localStorage.removeItem("authToken");
+
+      fetch.mockResolvedValueOnce({
+        ok: true,
+        json: vi.fn().mockResolvedValue([]),
+      });
+
+      await getTasks();
+
+      expect(fetch).toHaveBeenCalledWith("http://localhost:8080/tasks", {
+        headers: {},
+      });
     });
   });
 });
