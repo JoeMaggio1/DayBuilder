@@ -7,27 +7,40 @@ The original class diagram is shown below.
 ## Data model (DAYB-88)
 
 ```mermaid
+
 classDiagram
     class User {
-        -Long id
-        -String email  «unique»
-        -String passwordHash  «JsonIgnore»
-        -Role role
-        -List~Task~ tasks  «JsonIgnore»
+        +Long id
+        +String email
+        +String passwordHash
+        +Role role
     }
+
+    class Task {
+        +Long id
+        +String title
+        +String description
+        +boolean completed
+        +User owner
+        +Category category
+    }
+
+    class Category {
+        +Long id
+        +String name
+        +User owner
+        +List~Task~ tasks
+    }
+
     class Role {
         <<enumeration>>
         USER
         ADMIN
     }
-    class Task {
-        -Long id
-        -String title
-        -String description
-        -boolean completed
-        -User owner  «JsonIgnore»
-    }
+
     User "1" --> "0..*" Task : owns
+    User "1" --> "0..*" Category : owns
+    Category "0..1" <-- "0..*" Task : assigned to
     User --> Role : has
 ```
 

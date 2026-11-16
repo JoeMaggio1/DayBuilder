@@ -28,6 +28,14 @@ public class Task {
     @JoinColumn(name = "user_id")
     private User owner;
 
+
+    // DAYB: Optional category for each task
+    @JsonIgnore
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "category_id", nullable = true)
+    private Category category;
+
+
     protected Task() {
         // Required by JPA
     }
@@ -81,4 +89,13 @@ public class Task {
     public void setOwner(User owner) {
         this.owner = owner;
     }
+
+    public Category getCategory() {
+        return category;
+    }
+
+    public void setCategory(Category category) {
+        this.category = category;
+    }
+
 }
