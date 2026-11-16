@@ -13,6 +13,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import org.springframework.http.HttpMethod;
+
 @Configuration
 public class SecurityConfig {
 
@@ -47,8 +49,11 @@ public class SecurityConfig {
 
             // Define which endpoints require authentication
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/auth/**").permitAll()
-                .requestMatchers("/tasks", "/tasks/**").authenticated()
+                
+.requestMatchers("/auth/**").permitAll()
+.requestMatchers(HttpMethod.DELETE, "/tasks/completed").hasRole("ADMIN")
+.requestMatchers("/tasks", "/tasks/**").authenticated()
+
 
                 .requestMatchers("/categories", "/categories/**").authenticated()
 
