@@ -1,20 +1,20 @@
-import { useState } from 'react'
+import { useState } from "react";
 
 function TaskList({ tasks, onEdit, onDelete }) {
-  const [editingId, setEditingId] = useState(null)
-  const [editTitle, setEditTitle] = useState('')
-  const [editDescription, setEditDescription] = useState('')
+  const [editingId, setEditingId] = useState(null);
+  const [editTitle, setEditTitle] = useState("");
+  const [editDescription, setEditDescription] = useState("");
 
   function startEditing(task) {
-    setEditingId(task.id)
-    setEditTitle(task.title)
-    setEditDescription(task.description)
+    setEditingId(task.id);
+    setEditTitle(task.title);
+    setEditDescription(task.description);
   }
 
   function cancelEditing() {
-    setEditingId(null)
-    setEditTitle('')
-    setEditDescription('')
+    setEditingId(null);
+    setEditTitle("");
+    setEditDescription("");
   }
 
   async function saveEdit(task) {
@@ -22,9 +22,23 @@ function TaskList({ tasks, onEdit, onDelete }) {
       ...task,
       title: editTitle,
       description: editDescription,
-    })
+    });
 
-    setEditingId(null)
+    setEditingId(null);
+  }
+
+  // Display the category whether the API returns a name
+  // or an object containing the category name.
+  function getCategoryName(task) {
+    if (typeof task.category === "string") {
+      return task.category;
+    }
+
+    if (task.category && typeof task.category === "object") {
+      return task.category.name || "";
+    }
+
+    return "";
   }
 
   return (
@@ -46,37 +60,31 @@ function TaskList({ tasks, onEdit, onDelete }) {
               <input
                 type="text"
                 value={editDescription}
-                onChange={(event) =>
-                  setEditDescription(event.target.value)
-                }
+                onChange={(event) => setEditDescription(event.target.value)}
               />
 
-              <button onClick={() => saveEdit(task)}>
-                Save
-              </button>
+              <button onClick={() => saveEdit(task)}>Save</button>
 
-              <button onClick={cancelEditing}>
-                Cancel
-              </button>
+              <button onClick={cancelEditing}>Cancel</button>
             </>
           ) : (
             <>
               <h3>{task.title}</h3>
               <p>{task.description}</p>
 
-              <button onClick={() => startEditing(task)}>
-                Edit
-              </button>
+              {getCategoryName(task) && (
+                <p>Category: {getCategoryName(task)}</p>
+              )}
 
-              <button onClick={() => onDelete(task.id)}>
-                Delete
-              </button>
+              <button onClick={() => startEditing(task)}>Edit</button>
+
+              <button onClick={() => onDelete(task.id)}>Delete</button>
             </>
           )}
         </div>
       ))}
     </section>
-  )
+  );
 }
 
-export default TaskList
+export default TaskList;
