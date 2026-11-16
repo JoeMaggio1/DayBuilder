@@ -67,5 +67,11 @@ public class TaskService {
         taskRepository.deleteById(id);
         return true;
     }
+
+    @Transactional
+    public int clearCompletedTasks() {
+        return taskRepository.deleteCompletedTasks();
+    }
+
 }
 

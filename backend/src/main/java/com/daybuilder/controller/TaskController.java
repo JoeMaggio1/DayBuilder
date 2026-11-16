@@ -47,6 +47,16 @@ public class TaskController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // Admin-only endpoint; authorization is enforced
+    // in SecurityConfig before this method is invoked.
+    @DeleteMapping("/completed")
+    public ResponseEntity<Void> clearCompletedTasks() {
+
+        taskService.clearCompletedTasks();
+
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         if (taskService.deleteTask(id)) {

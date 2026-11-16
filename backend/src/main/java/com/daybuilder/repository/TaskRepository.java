@@ -10,7 +10,7 @@ import org.springframework.data.repository.query.Param;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
-    @Modifying
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
         UPDATE Task t
         SET t.category = null
@@ -19,4 +19,13 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     int clearCategoryAssignments(
         @Param("categoryId") Long categoryId
     );
+
+    // Delete completed tasks, leaving incomplete tasks untouched.
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+        DELETE FROM Task t
+        WHERE t.completed = true
+    """)
+    int deleteCompletedTasks();
 }
+
