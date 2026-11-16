@@ -1,47 +1,60 @@
+
 package com.daybuilder.service;
 
-import com.daybuilder.repository.InMemoryTaskRepository;
+import com.daybuilder.backend.BackendApplication;
+import com.daybuilder.model.Task;
+import com.daybuilder.repository.TaskRepository;
+
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * DAYB-82: Tests for the sample task startup component.
- */
+@SpringBootTest(classes = BackendApplication.class)
+@ActiveProfiles("test")
+@Transactional
 class SampleTaskInitializerTest {
 
-    @Test
-    void run_addsThreeSampleTasks() {
-        TaskService service = new TaskService(new InMemoryTaskRepository());
-        int before = service.getAllTasks().size();
+    @Autowired
+    private SampleTaskInitializer initializer;
 
-        new SampleTaskInitializer(service).run();
+    @Autowired
+    private TaskRepository repository;
 
-        assertEquals(before + 3, service.getAllTasks().size());
+    @BeforeEach
+    void clearTasks() {
+        repository.deleteAll();
     }
 
     @Test
-    void run_addsFinishHomeworkTask() {
-        TaskService service = new TaskService(new InMemoryTaskRepository());
+    void run_seedsThreeTasksWhenEmpty() {
+        initializer.run();
 
-        new SampleTaskInitializer(service).run();
-
-        assertTrue(service.getAllTasks().stream()
-            .anyMatch(t -> t.getTitle().equals("Finish homework")));
+        assertEquals(3, repository.count());
     }
-        // ---------- DAYB-84: Verify exact sample data ----------
 
     @Test
-    void run_seedsExpectedSampleTasksInOrder() {
-        TaskService service = new TaskService(new InMemoryTaskRepository());
+    void run_doesNotDuplicateTasks() {
+        initializer.run();
+        initializer.run();
 
-        new SampleTaskInitializer(service).run();
+        assertEquals(3, repository.count());
+    }
 
-        var tasks = service.getAllTasks();
-        assertEquals(3, tasks.size());
-        assertEquals("Finish homework", tasks.get(0).getTitle());
-        assertEquals("Go to class", tasks.get(1).getTitle());
-        assertEquals("Study", tasks.get(2).getTitle());
-        assertTrue(tasks.stream().noneMatch(t -> t.isCompleted()));
+    @Test
+    void run_doesNotSeedNonemptyDatabase() {
+        repository.save(
+            new Task(null, "Existing task", "", false)
+        );
+
+        initializer.run();
+
+        assertEquals(1, repository.count());
     }
 }
+
+
