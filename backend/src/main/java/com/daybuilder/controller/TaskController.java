@@ -47,6 +47,14 @@ public class TaskController {
                 .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
+    // DAYB-93: ADMIN only. SecurityConfig returns 403 for USER, 401 with no token.
+    // Declared before /{id} for readability; Spring matches the literal path first.
+    @DeleteMapping("/completed")
+    public ResponseEntity<Void> clearCompletedTasks() {
+        taskService.clearCompletedTasks();
+        return ResponseEntity.noContent().build();
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTask(@PathVariable Long id) {
         if (taskService.deleteTask(id)) {
