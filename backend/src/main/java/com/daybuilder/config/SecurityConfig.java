@@ -1,10 +1,10 @@
-
 package com.daybuilder.config;
 
 import com.daybuilder.security.JwtAuthenticationFilter;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -48,6 +48,9 @@ public class SecurityConfig {
             // Define which endpoints require authentication
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
+                // DAYB-93: admin-only action (must come before /tasks/**)
+                .requestMatchers(HttpMethod.DELETE, "/tasks/completed")
+                    .hasRole("ADMIN")
                 .requestMatchers("/tasks", "/tasks/**").authenticated()
 
                 .requestMatchers("/categories", "/categories/**").authenticated()
