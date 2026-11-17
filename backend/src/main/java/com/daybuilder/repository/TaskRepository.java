@@ -1,4 +1,3 @@
-
 package com.daybuilder.repository;
 
 import com.daybuilder.model.Task;
@@ -19,4 +18,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     int clearCategoryAssignments(
         @Param("categoryId") Long categoryId
     );
+
+    // DAYB-93: Delete every completed task in one query.
+    // flush/clear keep the persistence context in sync with the bulk delete.
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("DELETE FROM Task t WHERE t.completed = true")
+    int deleteCompletedTasks();
 }
