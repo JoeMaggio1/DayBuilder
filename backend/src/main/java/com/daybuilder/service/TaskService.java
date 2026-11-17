@@ -1,4 +1,3 @@
-
 package com.daybuilder.service;
 
 import java.util.List;
@@ -67,5 +66,11 @@ public class TaskService {
         taskRepository.deleteById(id);
         return true;
     }
-}
 
+    // DAYB-93: Admin-only (enforced in SecurityConfig).
+    // Returns how many tasks were removed.
+    @Transactional
+    public int clearCompletedTasks() {
+        return taskRepository.deleteCompletedTasks();
+    }
+}
